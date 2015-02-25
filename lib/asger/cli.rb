@@ -13,7 +13,7 @@ module Asger
     # Entry point called from `bin/asger`.
     def self.main()
       opts = Trollop::options do
-        opt :task_file,       "path to a task (Ruby file; pass in order of execution)",
+        opt :task_file,       "path to a task (Ruby file; pass in order of execution; % refers to the stock_scripts directory)",
                               :type => :string, :multi => true
         opt :parameter_file,  "path to a params file (YAML or JSON; later files override earlier ones)",
                               :type => :string, :multi => true
@@ -68,7 +68,13 @@ module Asger
       sqs_client = Aws::SQS::Client.new(logger: aws_logger, credentials: credentials)
       ec2_client = Aws::EC2::Client.new(logger: aws_logger, credentials: credentials)
 
-      runner = Runner.new(logger, sqs_client, ec2_client, opts[:queue_url], parameters, opts[:task_file])
+
+      stock_scripts_dir = File.expand_path(File.join(File.dirname(__FILE__), "..", "..", "stock_scripts"))
+      task_files = opts[:task_file].map { |f| f.gsub("%", stock_scripts_dir)}
+
+      logger.info "Using task files:"
+      task_files.each { |tf| logger.info " - #{tf}" }
+      runner = Runner.new(logger, sqs_client, ec2_client, opts[:queue_url], parameters, task_files)
 
       loop do
         begin
