@@ -20,6 +20,8 @@ module Asger
       @queue_url = queue_url
       @parameters = Hashie::Mash.new(parameters)
       @tasks = task_files.map { |tf| Task.from_file(@logger, tf) }
+
+      @tasks.each { |t| t.invoke_sanity_check(@parameters) }
     end
 
 
