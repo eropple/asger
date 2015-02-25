@@ -17,8 +17,10 @@ module Asger
 
     def invoke_sanity_check(parameters)
       if @sanity_check_proc
-        logger.debug "Sanity checking for '#{@name}..."
+        logger.debug "Sanity checking for '#{@name}'..."
         @sanity_check_proc.call(parameters)
+      else
+        logger.debug "No sanity check for '#{@name}'."
       end
     end
 
@@ -27,14 +29,18 @@ module Asger
         logger.debug "Invoking up for '#{@name}'..."
         @up_proc.call(instance, parameters)
         logger.debug "Up invoked for '#{@name}'..."
+      else
+        logger.debug "No up for '#{@name}'."
       end
     end
 
     def invoke_down(instance_id, parameters)
-      if @up_proc
+      if @down_proc
         logger.debug "Invoking down for '#{@name}'..."
         @down_proc.call(instance_id, parameters)
         logger.debug "Down invoked for '#{@name}'..."
+      else
+        logger.debug "No down for '#{@name}'."
       end
     end
 
@@ -63,7 +69,7 @@ module Asger
 
     # Defines a 'down' function.
     # @yield [instance_id, parameters]
-    # @yieldparam instance_id [String the ID of the recently terminated instance
+    # @yieldparam instance_id [String] the ID of the recently terminated instance
     # @yieldparam parameters [Hash] the parameters passed in to Asger
     def down(&block)
       @down_proc = block

@@ -4,6 +4,7 @@ require 'yaml'
 require 'trollop'
 
 require 'aws-sdk'
+require 'active_support'
 
 require 'asger/runner'
 
@@ -40,7 +41,7 @@ module Asger
         logger.error "--queue-url is required."
         exit(1)
       end
-      logger.warn "No tasks configured; Asger will run, but won't do much." unless !opts[:task_file]
+      logger.warn "No tasks configured; Asger will run, but won't do much." unless (opts[:task_file] && !opts[:task_file].empty?)
 
       param_files = 
         opts[:parameter_file].map do |pf|
@@ -49,7 +50,7 @@ module Asger
             when ".json"
               JSON.parse(File.read(pf))
             when ".yaml"
-              YAML.parse(File.read(pf))
+              YAML.load(File.read(pf))
             else
               raise "Unrecognized parameter file: '#{pf}'."
           end
@@ -76,6 +77,7 @@ module Asger
       task_files.each { |tf| logger.info " - #{tf}" }
       runner = Runner.new(logger, sqs_client, ec2_client, opts[:queue_url], parameters, task_files)
 
+      logger.info "Beginning run loop. Sleeping between steps for #{opts[:pause_time]} seconds."
       loop do
         begin
           runner.step()

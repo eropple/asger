@@ -21,13 +21,14 @@ module Asger
       @parameters = Hashie::Mash.new(parameters)
       @tasks = task_files.map { |tf| Task.from_file(@logger, tf) }
 
+      @logger.info "#{@tasks.length} task(s) set up."
+
       @tasks.each { |t| t.invoke_sanity_check(@parameters) }
     end
 
 
     def step()
       messages = @sqs_client.receive_message(queue_url: @queue_url)[:messages]
-      @logger.debug "Received #{messages.length} messages."
       messages.each do |msg|
         notification = JSON.parse(JSON.parse(msg[:body])["Message"])
         if notification["Event"] != nil
@@ -49,7 +50,7 @@ module Asger
               instance_id = notification["EC2InstanceId"]
               @logger.info "Instance terminated: #{instance_id}"
 
-              @tasks.reverse.each do |task|
+              @tasks.reverse_each do |task|
                 task.invoke_down(instance_id, @parameters)
               end
               delete_message(msg)
@@ -58,6 +59,7 @@ module Asger
               delete_message(msg)
             when "TEST_NOTIFICATION"
               @logger.debug "Found test notification in queue."
+              delete_message(msg)
             else
               @logger.debug "Unrecognized notification '#{notification["Event"]}', ignoring."
           end

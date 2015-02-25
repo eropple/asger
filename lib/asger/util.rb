@@ -1,29 +1,30 @@
+require 'open3'
+
 module Asger
   module Util
 
-    def self.run_command(subcommand_name, command, directory = ROOT, hide_cmd = false, hide_stdout = false)
-      LOGGER.info "[#{subcommand_name}] => #{command}" unless hide_cmd
+    def self.run_command(subcommand_name, command, logger = nil, directory = nil)
+      directory = directory || Dir.getwd()
+      logger.info "[#{subcommand_name}] => #{command}" unless !logger
 
       lines = []
 
       Dir.chdir(directory) do
         # TODO: this should probably raise on nonzero.
-        Open3::popen3(command) do |stdin, stdout, stderr, wait_thr|
+        thread = Open3::popen3(command) do |stdin, stdout, stderr, wait_thr|
           stdout.read.split("\n").each do |line|
             lines << line 
-            LOGGER.debug "[#{subcommand_name}] O: #{line}" unless hide_stdout
+            logger.debug "[#{subcommand_name}] O: #{line}" unless !logger
           end
           stderr.read.split("\n").each do |line|
-            LOGGER.debug "[#{subcommand_name}] E: #{line}"
+            logger.debug "[#{subcommand_name}] E: #{line}" unless !logger
           end
 
-          if wait_thr.exited? || wait_thr.stopped?
-            return [ wait_thr.exitstatus, lines.join("\n") ]
-          end
+          wait_thr
         end
-      end
 
-      raise "should never reach here!"
+        [ thread.value.exitstatus, lines.join("\n") ]
+      end
     end
 
   end
