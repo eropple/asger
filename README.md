@@ -15,7 +15,8 @@
 Sample usage:
 
 ```bash
-./bin/asger --queue-url 'https://sqs.us-east-1.amazonaws.com/ACCOUNT_ID/QUEUE_NAME' --shared-credentials=CREDS --parameter-file /tmp/some_params.yaml --task-file %/echo.rb --task-file %/chef_deregister.rb
+gem install asger
+asger --queue-url 'https://sqs.us-east-1.amazonaws.com/ACCOUNT_ID/QUEUE_NAME' --shared-credentials=CREDS --parameter-file /tmp/some_params.yaml --task-file %/echo.rb --task-file %/chef_deregister.rb
 ```
 
 (Note: `%` is a special path character when passed to `--task-file`; it refers to the `stock_scripts` directory within the gem, so you can get started right away with the stock scripts.)
