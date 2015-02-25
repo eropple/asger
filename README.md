@@ -15,8 +15,10 @@
 Sample usage:
 
 ```bash
-./bin/asger --queue-url 'https://sqs.us-east-1.amazonaws.com/ACCOUNT_ID/QUEUE_NAME' --shared-credentials=CREDS --parameter-file /tmp/some_params.yaml --task-file samples/echo.rb
+./bin/asger --queue-url 'https://sqs.us-east-1.amazonaws.com/ACCOUNT_ID/QUEUE_NAME' --shared-credentials=CREDS --parameter-file /tmp/some_params.yaml --task-file %/echo.rb --task-file %/chef_deregister.rb
 ```
+
+(Note: `%` is a special path character when passed to `--task-file`; it refers to the `stock_scripts` directory within the gem, so you can get started right away with the stock scripts.)
 
 ## Embedded ##
 
@@ -38,7 +40,7 @@ Or install it yourself as:
 gem install asger
 ```
 
-Yardocs are available with `yard`, and in a moderate state of completion. Nothing in `asger` is particularly complicated, though, so I recommend just taking a look at the source.
+Yardocs are available with `yard`, though they aren't complete. Nothing in `asger` is particularly complicated, though, so I recommend just taking a look at the source.
 
 ## Contributing ##
 
