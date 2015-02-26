@@ -4,6 +4,7 @@ require 'yaml'
 require 'trollop'
 
 require 'aws-sdk'
+require 'active_support'
 
 require 'asger/runner'
 
@@ -13,7 +14,7 @@ module Asger
     # Entry point called from `bin/asger`.
     def self.main()
       opts = Trollop::options do
-        opt :task_file,       "path to a task (Ruby file; pass in order of execution)",
+        opt :task_file,       "path to a task (Ruby file; pass in order of execution; % refers to the stock_scripts directory)",
                               :type => :string, :multi => true
         opt :parameter_file,  "path to a params file (YAML or JSON; later files override earlier ones)",
                               :type => :string, :multi => true
@@ -46,7 +47,7 @@ module Asger
         exit(1)
       end
 
-      logger.warn "No tasks configured; Asger will run, but won't do much." unless !opts[:task_file]
+      logger.warn "No tasks configured; Asger will run, but won't do much." unless (opts[:task_file] && !opts[:task_file].empty?)
 
       param_files = 
         opts[:parameter_file].map do |pf|
@@ -55,7 +56,7 @@ module Asger
             when ".json"
               JSON.parse(File.read(pf))
             when ".yaml"
-              YAML.parse(File.read(pf))
+              YAML.load(File.read(pf))
             else
               raise "Unrecognized parameter file: '#{pf}'."
           end
@@ -78,8 +79,15 @@ module Asger
       sqs_client = Aws::SQS::Client.new(logger: aws_logger, credentials: credentials)
       ec2_client = Aws::EC2::Client.new(logger: aws_logger, credentials: credentials)
 
-      runner = Runner.new(logger, sqs_client, ec2_client, opts[:queue_url], parameters, opts[:task_file])
 
+      stock_scripts_dir = File.expand_path(File.join(File.dirname(__FILE__), "..", "..", "stock_scripts"))
+      task_files = opts[:task_file].map { |f| f.gsub("%", stock_scripts_dir)}
+
+      logger.info "Using task files:"
+      task_files.each { |tf| logger.info " - #{tf}" }
+      runner = Runner.new(logger, sqs_client, ec2_client, opts[:queue_url], parameters, task_files)
+
+      logger.info "Beginning run loop. Sleeping between steps for #{opts[:pause_time]} seconds."
       loop do
         begin
           runner.step()

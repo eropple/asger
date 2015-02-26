@@ -2,6 +2,9 @@
 
 `asger` is a tool designed to field notifications from Amazon EC2 auto-scaling groups via a SNS topic subscribed to an SQS queue. (Which probably sounds alarmingly specific, but it's the most common way to do this!) Once a notification is fielded, the user can define Tasks that then perform actions on instance creation ("up" functions) and termination ("down" functions).
 
+### Important Notes ###
+- When multiple tasks are running in a single `asger` instance, they will be run in order on instance creation and _in reverse order_ on instance termination.
+
 ## Contributors ##
 `asger` was built primarily at [Leaf](http://leaf.me) by [Ed Ropple](mailto:ed+asger@edropple.com) ([twitter](https://twitter.com/edropple)).
 
@@ -12,10 +15,11 @@
 Sample usage:
 
 ```bash
-./bin/asger --queue-url 'https://sqs.us-east-1.amazonaws.com/ACCOUNT_ID/QUEUE_NAME' --shared-credentials=CREDS --parameter-file /tmp/some_params.yaml --task-file samples/echo.rb
+gem install asger
+asger --queue-url 'https://sqs.us-east-1.amazonaws.com/ACCOUNT_ID/QUEUE_NAME' --shared-credentials=CREDS --parameter-file /tmp/some_params.yaml --task-file %/echo.rb --task-file %/chef_deregister.rb
 ```
 
-**One important note:** when multiple tasks are running in a single `asger` instance, they will be run in order on instance creation and _in reverse order_ on instance termination. Other than that, it should be pretty unsurprising!
+(Note: `%` is a special path character when passed to `--task-file`; it refers to the `stock_scripts` directory within the gem, so you can get started right away with the stock scripts.)
 
 ## Embedded ##
 
@@ -37,7 +41,7 @@ Or install it yourself as:
 gem install asger
 ```
 
-Yardocs are available with `yard`, and in a moderate state of completion. Nothing in `asger` is particularly complicated, though, so I recommend just taking a look at the source.
+Yardocs are available with `yard`, though they aren't complete. Nothing in `asger` is particularly complicated, though, so I recommend just taking a look at the source.
 
 ## Contributing ##
 
