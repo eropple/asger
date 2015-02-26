@@ -29,6 +29,7 @@ module Asger
         opt :aws_logging,     "Provides the Asger logger to AWS (use for deep debugging).", :default => false
 
         opt :shared_credentials, "Tells Asger to use shared credentials from '~/.aws/credentials'.", :type => :string
+        opt :iam,             "Tells Asger to use IAM credentials.", :default => false
       end
 
       logger = Logger.new($stderr)
@@ -40,6 +41,11 @@ module Asger
         logger.error "--queue-url is required."
         exit(1)
       end
+      if opts[:shared_credentials] && opts[:iam]
+        logger.error "Only one of --shared-credentials and --iam can be used at a time."
+        exit(1)
+      end
+
       logger.warn "No tasks configured; Asger will run, but won't do much." unless !opts[:task_file]
 
       param_files = 
@@ -58,11 +64,15 @@ module Asger
       parameters = {}
       param_files.each { |p| parameters.deep_merge!(p) }
 
-      credentials = nil
-      if opts[:shared_credentials]
-        logger.info "Using shared credentials '#{opts[:shared_credentials]}'."
-        credentials = Aws::SharedCredentials.new(profile_name: opts[:shared_credentials])
-      end
+      credentials =
+        if opts[:shared_credentials]
+          logger.info "Using shared credentials '#{opts[:shared_credentials]}'."
+          Aws::SharedCredentials.new(profile_name: opts[:shared_credentials])
+        elsif opts[:iam]
+          Aws::InstanceProfileCredentials.new
+        else
+          raise "No credentials found. Use --shared-credentials or --iam."
+        end
 
       aws_logger = opts[:aws_logging] ? logger : nil
       sqs_client = Aws::SQS::Client.new(logger: aws_logger, credentials: credentials)
