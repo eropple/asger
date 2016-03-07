@@ -20,17 +20,19 @@ module Asger
                               :type => :string, :multi => true
         opt :queue_url,       "URL of the SQS queue to read from",
                               :type => :string
-        opt :pause_time,      "Time (in seconds) to pause between polls.",
-                              :default => 0
         opt :verbose,         "enables verbose logging",
                               :default => false
         opt :die_on_error,    "Terminates if an exception is thrown within the task runner.",
+                              :default => true
+
+        opt :delete_messages, 'Delete messages from the SQS queue after processing (off is useful for development).',
                               :default => true
 
         opt :aws_logging,     "Provides the Asger logger to AWS (use for deep debugging).", :default => false
 
         opt :shared_credentials, "Tells Asger to use shared credentials from '~/.aws/credentials'.", :type => :string
         opt :iam,             "Tells Asger to use IAM credentials.", :default => false
+        opt :region,          'Specifies an AWS region.', :type => :string
       end
 
       logger = Logger.new($stderr)
@@ -47,9 +49,10 @@ module Asger
         exit(1)
       end
 
-      logger.warn "No tasks configured; Asger will run, but won't do much." unless (opts[:task_file] && !opts[:task_file].empty?)
+      logger.warn "No tasks configured; Asger will run, but won't do much." \
+        unless (opts[:task_file] && !opts[:task_file].empty?)
 
-      param_files = 
+      param_files =
         opts[:parameter_file].map do |pf|
           logger.debug "Parsing parameter file '#{pf}'."
           case File.extname(pf)
@@ -76,8 +79,12 @@ module Asger
         end
 
       aws_logger = opts[:aws_logging] ? logger : nil
-      sqs_client = Aws::SQS::Client.new(logger: aws_logger, credentials: credentials)
-      ec2_client = Aws::EC2::Client.new(logger: aws_logger, credentials: credentials)
+      sqs_client = Aws::SQS::Client.new(logger: aws_logger,
+        region: opts[:region], credentials: credentials)
+      ec2_client = Aws::EC2::Client.new(logger: aws_logger,
+        region: opts[:region], credentials: credentials)
+      asg_client = Aws::AutoScaling::Client.new(logger: aws_logger,
+        region: opts[:region], credentials: credentials)
 
 
       stock_scripts_dir = File.expand_path(File.join(File.dirname(__FILE__), "..", "..", "stock_scripts"))
@@ -85,12 +92,17 @@ module Asger
 
       logger.info "Using task files:"
       task_files.each { |tf| logger.info " - #{tf}" }
-      runner = Runner.new(logger, sqs_client, ec2_client, opts[:queue_url], parameters, task_files)
+      runner = Runner.new(logger: logger, aws_logger: aws_logger,
+                          region: opts[:region], credentials: credentials,
+                          queue_url: opts[:queue_url],
+                          parameters: parameters,
+                          task_files: task_files,
+                          no_delete_messages: !opts[:delete_messages])
 
-      logger.info "Beginning run loop. Sleeping between steps for #{opts[:pause_time]} seconds."
+      logger.info "Beginning poll loop."
       loop do
         begin
-          runner.step()
+          runner.poll
         rescue StandardError => err
           logger.error "Encountered an error."
           logger.error "#{err.class.name}: #{err.message}"
@@ -98,9 +110,10 @@ module Asger
 
           if opts[:die_on_error]
             raise err
+          else
+            logger.error "re-entering poll."
           end
         end
-        sleep opts[:pause_time] unless opts[:pause_time] == 0
       end
     end
   end

@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake",             "~> 10.0"
   spec.add_development_dependency "pry"
 
-  spec.add_runtime_dependency     'aws-sdk',          '~> 2.0.27'
+  spec.add_runtime_dependency     'aws-sdk',          '~> 2.2.22'
   spec.add_runtime_dependency     'trollop',          '~> 2.1.1'
   spec.add_runtime_dependency     "hashie",             "~> 3.3"
   spec.add_runtime_dependency     'activesupport',      '~> 4.2.0'

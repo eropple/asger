@@ -2,19 +2,19 @@
 # It will perform a Chef search for an 'instance_id' tag that matches the instance ID
 # provided by the AWS notification. To tag a node with the instance_id from bash, do
 # something like this on-node (probably in cloud-init):
-# 
+#
 # ```bash
 # knife tag create -c /path/to/client.rb $NODE_NAME $INSTANCE_ID
 # ```
-# 
+#
 # Which, in our naming scheme at Leaf, becomes:
-# 
+#
 # ```bash
 # knife tag create -c /etc/chef/client.rb vpn.test-cloud.infra.06f1d39c i-06f1d39c
 # ```
-# 
+#
 # PARAMETERS:
-# 
+#
 # chef_deregister.knife_config: the path to the knife config to use for search/node delete
 
 require 'json'
@@ -26,7 +26,7 @@ sanity_check do |parameters|
   raise "file '#{knife_config}' does not exist" unless File.exist?(knife_config)
 end
 
-down do |instance_id, parameters|
+down do |instance_id, asg, parameters|
   knife_config = parameters[:chef_deregister][:knife_config]
 
   search_result = Asger::Util::run_command("knife search: #{instance_id}",
