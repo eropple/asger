@@ -1,6 +1,6 @@
 # `asger` #
 
-`asger` is a tool designed to field notifications from Amazon EC2 auto-scaling groups via a SNS topic subscribed to an SQS queue. (Which probably sounds alarmingly specific, but it's the most common way to do this!) Once a notification is fielded, the user can define Tasks that then perform actions on instance creation ("up" functions) and termination ("down" functions).
+`asger` is a tool designed to field notifications from Amazon EC2 auto-scaling groups via a SNS topic subscribed to an SQS queue. (Which probably sounds alarmingly specific, but it's the most common way to do this!) Once a notification is fielded, the user can define Tasks that then perform actions on instance creation ("up" functions) and termination ("down" functions), as well as their associated failure events.
 
 ### Important Notes ###
 - When multiple tasks are running in a single `asger` instance, they will be run in order on instance creation and _in reverse order_ on instance termination.
