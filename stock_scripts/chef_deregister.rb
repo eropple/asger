@@ -19,7 +19,7 @@
 
 require 'json'
 
-sanity_check do |parameters|
+init do |parameters|
   knife_config = parameters[:chef_deregister][:knife_config]
   raise "parameters[:chef_deregister][:knife_config] is not set" unless knife_config
 

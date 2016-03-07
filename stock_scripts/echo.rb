@@ -1,4 +1,7 @@
 # Just logs the instances being created and destroyed to the logger for testing.
+init do |parameters|
+  logger.info 'echo - init'
+end
 
 up do |instance, asg, parameters|
   logger.info "echo - upping instance in '#{asg.name}': #{instance}"
