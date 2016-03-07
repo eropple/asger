@@ -15,12 +15,12 @@ module Asger
       instance_eval(code, filename, 1)
     end
 
-    def invoke_sanity_check(parameters)
-      if @sanity_check_proc
-        logger.debug "Sanity checking for '#{@name}'..."
-        @sanity_check_proc.call(parameters)
+    def invoke_init(parameters)
+      if @init_proc
+        logger.debug "Initializing for '#{@name}'..."
+        @init_proc.call(parameters)
       else
-        logger.debug "No sanity check for '#{@name}'."
+        logger.debug "No init for '#{@name}'."
       end
     end
 
@@ -69,14 +69,14 @@ module Asger
     end
 
     private
-    # Defines a sanity check function, which should raise and fail (which will halt
-    # Asger before it does anything with the actual queue) if there's a problem with
-    # the parameter set.
+    # Defines an init function, which should set member vars. Raise and fail (which
+    # will halt Asger before it does anything with the actual queue) if there's a
+    # problem with the parameter set.
     #
     # @yield [parameters]
     # @yieldparam parameters [Hash] the parameters passed in to Asger
-    def sanity_check(&block)
-      @sanity_check_proc = block
+    def init(&block)
+      @init_proc = block
     end
 
     # Defines an 'up' function, addressing `EC2_INSTANCE_LAUNCH`.

@@ -1,6 +1,6 @@
 require 'logger'
 require 'aws-sdk'
-require 'hashie'
+require 'ice_nine'
 
 require 'asger/task'
 
@@ -19,6 +19,10 @@ module Asger
                    parameters:, task_files:, no_delete_messages:)
       @logger = logger
       @region = region
+      @parameters = IceNine.deep_freeze(parameters.merge(
+        region: region, credentials: credentials
+      ).deep_symbolize_keys)
+
       @sqs_client = Aws::SQS::Client.new(logger: aws_logger,
         region: region, credentials: credentials)
       @ec2_client = Aws::EC2::Client.new(logger: aws_logger,
@@ -28,7 +32,6 @@ module Asger
       @ec2_resource_client = Aws::EC2::Resource.new(client: @ec2_client)
       @asg_resource_client = Aws::AutoScaling::Resource.new(client: @asg_client)
       @queue_url = queue_url
-      @parameters = Hashie::Mash.new(parameters)
       @tasks = task_files.map { |tf| Task.from_file(@logger, tf) }
       @no_delete_messages = no_delete_messages
 
@@ -36,7 +39,7 @@ module Asger
       @logger.warn('no_delete_messages is set; will not clear SQS messages!') \
         if @no_delete_messages
 
-      @tasks.each { |t| t.invoke_sanity_check(@parameters) }
+      @tasks.each { |t| t.invoke_init(@parameters) }
     end
 
 
