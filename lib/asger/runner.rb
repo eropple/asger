@@ -1,6 +1,7 @@
 require 'logger'
 require 'aws-sdk'
 require 'ice_nine'
+require 'active_support/all'
 
 require 'asger/task'
 
