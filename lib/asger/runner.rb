@@ -21,8 +21,8 @@ module Asger
       @logger = logger
       @region = region
       @parameters = parameters.merge(
-        region: region.freeze, credentials: credentials
-      ).freeze
+        region: region, credentials: credentials
+      ).deep_symbolize_keys
 
       @sqs_client = Aws::SQS::Client.new(logger: aws_logger,
         region: region, credentials: credentials)
