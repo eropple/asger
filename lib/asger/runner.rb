@@ -20,9 +20,9 @@ module Asger
                    parameters:, task_files:, no_delete_messages:)
       @logger = logger
       @region = region
-      @parameters = IceNine.deep_freeze(parameters.merge(
-        region: region, credentials: credentials
-      ).deep_symbolize_keys)
+      @parameters = parameters.merge(
+        region: region/freeze, credentials: credentials
+      ).freeze
 
       @sqs_client = Aws::SQS::Client.new(logger: aws_logger,
         region: region, credentials: credentials)
